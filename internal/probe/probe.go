@@ -90,6 +90,18 @@ func probeOne(ifc iface.Interface, cfg Config) ProbeResult {
 	return res
 }
 
+// CheckRawICMP opens one raw ICMP socket and closes it again, without any
+// network I/O. Callers use it to fail early with a permission message instead
+// of rendering every interface as unreachable when the process simply may not
+// open raw sockets.
+func CheckRawICMP() error {
+	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		return fmt.Errorf("open raw ICMP socket: %w", err)
+	}
+	return conn.Close()
+}
+
 // ICMPPing sends a single echo request from src and waits for the reply. The
 // socket binds to src, so the kernel routes the packet through that interface's
 // address. Raw ICMP needs CAP_NET_RAW on Linux and administrator rights on
